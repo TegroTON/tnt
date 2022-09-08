@@ -29,6 +29,14 @@ application {
     mainClass.set("com.libermall.tnt.ApplicationKt")
 }
 
+distributions {
+    main {
+        contents {
+            from("README.md", "LICENSE.txt")
+        }
+    }
+}
+
 repositories {
     mavenCentral()
     maven("https://jitpack.io")
