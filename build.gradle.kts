@@ -17,7 +17,7 @@
  */
 
 plugins {
-    kotlin("multiplatform") version "1.7.0"
+    kotlin("multiplatform") version "1.7.10"
     kotlin("plugin.serialization") version "1.7.10"
     application
 }

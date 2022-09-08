@@ -10,64 +10,64 @@
         "type": "naked_snake",
         "value": "https://s.getgems.io/nft/b/c/626a922e5e67c1f424154711/"
       },
-      "owner": "kQCtrqGMkj5GvQjFWjVOasejjkOWST7n5GuRGH9V3JJ07l0j",
+      "owner": "EQDpl_EDsAwIME91TvXCi6xsM_7dYaB4vZoDbcu_QHmldeUI",
       "royalty": {
         "numerator": 69,
         "denominator": 1000,
-        "destination": "kQCtrqGMkj5GvQjFWjVOasejjkOWST7n5GuRGH9V3JJ07l0j"
+        "destination": "EQDpl_EDsAwIME91TvXCi6xsM_7dYaB4vZoDbcu_QHmldeUI"
       },
       "items": [
         {
-          "owner": "kQCtrqGMkj5GvQjFWjVOasejjkOWST7n5GuRGH9V3JJ07l0j",
+          "owner": "EQDpl_EDsAwIME91TvXCi6xsM_7dYaB4vZoDbcu_QHmldeUI",
           "content": {
             "type": "naked_snake",
             "value": "1/meta.json"
           }
         },
         {
-          "owner": "kQCtrqGMkj5GvQjFWjVOasejjkOWST7n5GuRGH9V3JJ07l0j",
+          "owner": "EQDpl_EDsAwIME91TvXCi6xsM_7dYaB4vZoDbcu_QHmldeUI",
           "content": {
             "type": "naked_snake",
             "value": "2/meta.json"
           }
         },
         {
-          "owner": "kQCtrqGMkj5GvQjFWjVOasejjkOWST7n5GuRGH9V3JJ07l0j",
+          "owner": "EQDpl_EDsAwIME91TvXCi6xsM_7dYaB4vZoDbcu_QHmldeUI",
           "content": {
             "type": "naked_snake",
             "value": "3/meta.json"
           }
         },
         {
-          "owner": "kQCtrqGMkj5GvQjFWjVOasejjkOWST7n5GuRGH9V3JJ07l0j",
+          "owner": "EQDpl_EDsAwIME91TvXCi6xsM_7dYaB4vZoDbcu_QHmldeUI",
           "content": {
             "type": "naked_snake",
             "value": "4/meta.json"
           }
         },
         {
-          "owner": "kQCtrqGMkj5GvQjFWjVOasejjkOWST7n5GuRGH9V3JJ07l0j",
+          "owner": "EQDpl_EDsAwIME91TvXCi6xsM_7dYaB4vZoDbcu_QHmldeUI",
           "content": {
             "type": "naked_snake",
             "value": "5/meta.json"
           }
         },
         {
-          "owner": "kQCtrqGMkj5GvQjFWjVOasejjkOWST7n5GuRGH9V3JJ07l0j",
+          "owner": "EQDpl_EDsAwIME91TvXCi6xsM_7dYaB4vZoDbcu_QHmldeUI",
           "content": {
             "type": "naked_snake",
             "value": "6/meta.json"
           }
         },
         {
-          "owner": "kQCtrqGMkj5GvQjFWjVOasejjkOWST7n5GuRGH9V3JJ07l0j",
+          "owner": "EQDpl_EDsAwIME91TvXCi6xsM_7dYaB4vZoDbcu_QHmldeUI",
           "content": {
             "type": "naked_snake",
             "value": "7/meta.json"
           }
         },
         {
-          "owner": "kQCtrqGMkj5GvQjFWjVOasejjkOWST7n5GuRGH9V3JJ07l0j",
+          "owner": "EQDpl_EDsAwIME91TvXCi6xsM_7dYaB4vZoDbcu_QHmldeUI",
           "content": {
             "type": "naked_snake",
             "value": "8/meta.json"

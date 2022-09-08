@@ -27,7 +27,7 @@ import com.github.ajalt.mordant.terminal.Terminal
 import com.libermall.tnt.contract.nft.CollectionContract
 import com.libermall.tnt.contract.nft.ItemContract
 import com.libermall.tnt.flatten
-import com.libermall.tnt.toRaw
+import com.libermall.tnt.toSafeBounceable
 import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -63,18 +63,18 @@ class ItemCommand : CliktCommand(
             table {
                 captionTop("Item Properties")
                 body {
-                    row("Address", address.toRaw())
+                    row("Address", address.toSafeBounceable())
                     row("Initialized", contract.initialized)
                     row("Index", contract.index)
-                    row("Collection", contract.collection.toRaw() ?: "none")
-                    row("Owner", contract.owner.toRaw() ?: "none")
+                    row("Collection", contract.collection.toSafeBounceable() ?: "none")
+                    row("Owner", contract.owner.toSafeBounceable() ?: "none")
                 }
             }
         )
 
         terminal.println(
             table {
-                captionTop("Item Individual Content")
+                captionTop("Item Content")
 
                 column(1) {
                     overflowWrap = OverflowWrap.BREAK_WORD

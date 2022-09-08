@@ -26,7 +26,7 @@ import com.github.ajalt.mordant.table.table
 import com.github.ajalt.mordant.terminal.Terminal
 import com.libermall.tnt.contract.nft.CollectionContract
 import com.libermall.tnt.flatten
-import com.libermall.tnt.toRaw
+import com.libermall.tnt.toSafeBounceable
 import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -53,9 +53,9 @@ class CollectionCommand : CliktCommand(
             table {
                 captionTop("Collection Properties")
                 body {
-                    row("Address", address.toRaw())
+                    row("Address", address.toSafeBounceable())
                     row("Size", contract.next_item_index)
-                    row("Owner", contract.owner.toRaw() ?: "none")
+                    row("Owner", contract.owner.toSafeBounceable() ?: "none")
                 }
             }
         )
