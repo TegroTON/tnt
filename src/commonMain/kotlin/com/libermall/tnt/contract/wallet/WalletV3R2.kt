@@ -20,6 +20,7 @@ package com.libermall.tnt.contract.wallet
 
 import com.libermall.tnt.sendMessage
 import kotlinx.coroutines.delay
+import mu.KLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.ton.api.pk.PrivateKeyEd25519
@@ -30,6 +31,7 @@ import org.ton.block.StateInit
 import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
+import org.ton.crypto.base64
 import org.ton.crypto.hex
 import org.ton.lite.api.liteserver.LiteServerAccountId
 import org.ton.lite.client.LiteClient
@@ -40,6 +42,11 @@ data class WalletV3R2(
     val workchain_id: Int = 0,
     val wallet_id: UInt = (698983191 + workchain_id).toUInt(),
 ) : KoinComponent {
+    init {
+        logger.warn { "For recovery purposes, single-use wallet's private key is ${base64(private_key.key)}" }
+        logger.warn { "Never share this private key with anyone!" }
+    }
+
     private val liteClient by inject<LiteClient>()
 
     private val data = CellBuilder.createCell {
@@ -79,7 +86,7 @@ data class WalletV3R2(
 
     suspend fun seqno(): UInt = seqno(address, liteClient)
 
-    companion object {
+    companion object : KLogging() {
         val CODE =
             BagOfCells(hex("B5EE9C724101010100710000DEFF0020DD2082014C97BA218201339CBAB19F71B0ED44D0D31FD31F31D70BFFE304E0A4F2608308D71820D31FD31FD31FF82313BBF263ED44D0D31FD31FD3FFD15132BAF2A15144BAF2A204F901541055F910F2A3F8009320D74A96D307D402FB00E8D101A4C8CB1FCB1FCBFFC9ED5410BD6DAD")).roots.first()
 
