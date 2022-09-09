@@ -63,3 +63,5 @@ fun ContentData.flatten(): ByteArray = when (this) {
     is ContentData.Snake -> this.data.flatten()
     is ContentData.Chunks -> TODO("chunky content data")
 }
+
+expect fun readFileAsString(file: String): String

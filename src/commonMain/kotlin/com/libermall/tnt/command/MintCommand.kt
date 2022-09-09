@@ -31,14 +31,15 @@ import com.libermall.tnt.model.CollectionModel
 import com.libermall.tnt.model.MintableModel
 import com.libermall.tnt.model.SpecModel
 import com.libermall.tnt.model.StandaloneItemModel
+import com.libermall.tnt.readFileAsString
 import com.libermall.tnt.toSafeBounceable
 import com.libermall.tnt.toSafeUnbounceable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
 import mu.KLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -47,7 +48,6 @@ import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
 import org.ton.lite.client.LiteClient
 import org.ton.tlb.storeTlb
-import java.io.File
 
 class MintCommand : CliktCommand(
     name = "mint",
@@ -62,7 +62,7 @@ class MintCommand : CliktCommand(
     @OptIn(ExperimentalSerializationApi::class)
     val spec by argument().convert {
         try {
-            Json.decodeFromStream<SpecModel>(File(it).inputStream())
+            Json.decodeFromString<SpecModel>(readFileAsString(it))
         } catch (e: Exception) {
             logger.warn(e, {})
             throw e
