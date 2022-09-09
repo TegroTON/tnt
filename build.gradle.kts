@@ -54,7 +54,7 @@ kotlin {
             dependencies {
                 implementation("com.github.ajalt.clikt:clikt:3.5.0")
                 implementation("com.github.ajalt.mordant:mordant:2.0.0-beta7")
-                implementation("com.github.antonmeep.ton-kotlin:ton-kotlin:83482f1fb0")
+                implementation("com.github.andreypfau.ton-kotlin:ton-kotlin:c678f34b0a")
                 implementation("io.github.microutils:kotlin-logging:2.1.23")
                 implementation("io.insert-koin:koin-core:3.2.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
