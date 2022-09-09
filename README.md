@@ -16,9 +16,21 @@ as [testnet](https://ton.org/docs/#/testnet/), and
 >
 > **TNT** is provided WITHOUT ANY WARRANTY
 
+# Installation
+
+Currently, only JVM-based builds are available. Any JDK supporting Java 11+ is
+sufficient to run and use **TNT**.
+
+1. Download latest version from [releases](https://github.com/LiberMall/tnt/releases)
+   page. Development versions are built for each commit and can be found on the
+   [actions](https://github.com/LiberMall/tnt/actions) page.
+2. Extract downloaded archive
+3. Use `./bin/tnt` to run commands.
+
 # Getting Started
 
-**TNT** features multiple commands TODO
+**TNT** features multiple commands to query, modify, and create new NFT items
+and collections on The Open Network blockchain.
 
 It is important to note use of `--network=mainnet|testnet|sandbox` option in
 following examples to explicitly specify target network, as attempting to call
@@ -258,3 +270,24 @@ $ tnt --network=testnet mint examples/tegro_dog.json
 
 Proceed according to instructions, you will have to send at least 3 TON to the
 newly generated single-use address in testnet.
+
+# Reporting Issues
+
+Please, use [issues](https://github.com/LiberMall/tnt/issues) page to report
+any bugs, ask questions or suggest new features.
+
+When reporting bus, make sure to provide as much helpful information as you
+can: operating system and its version, JDK version used to run **TNT**, exact
+command line you used and program's output you got.
+
+**TNT** also creates log files for each invocation in system's temporary path,
+which is usually `/tmp` on Unix-like systems and `%TEMP%` on Windows. Files are
+named as `tnt.<yyyyMMdd'T'HHmmss>.log`, middle part being the exact time of
+program startup. These log files are immensely helpful when troubleshooting.
+
+> *Warning*: When running `tnt mint`, log files contain single-use wallet's
+> private key. This is done intentionally to allow recovery of coins in case of
+> failure, but may pose a security risk if misused. Never share these raw log
+> files without first removing sensitive information from them.
+
+In future versions, this behaviour will be changed.
