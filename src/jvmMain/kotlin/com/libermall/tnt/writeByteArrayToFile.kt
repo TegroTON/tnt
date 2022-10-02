@@ -18,23 +18,13 @@
 
 package com.libermall.tnt
 
-import com.github.ajalt.clikt.core.subcommands
-import com.libermall.tnt.command.*
-import com.libermall.tnt.logger.KoinLogger
-import org.koin.core.context.startKoin
-import org.koin.core.logger.Level
+import java.io.File
+import java.nio.file.Paths
 
-fun main(args: Array<String>) {
-    startKoin {
-        logger(KoinLogger(Level.DEBUG))
+actual fun writeByteArrayToFile(base: String, file: String, value: ByteArray): String =
+    File(base, file).apply {
+        createNewFile()
+        writeBytes(value)
     }
-
-    TntCommand()
-        .subcommands(
-            CollectionCommand(),
-            ItemCommand(),
-            MintCommand(),
-            SendCommand(),
-        )
-        .main(args)
-}
+        .relativeTo(Paths.get("").toFile())
+        .name

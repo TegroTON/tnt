@@ -65,3 +65,7 @@ fun ContentData.flatten(): ByteArray = when (this) {
 }
 
 expect fun readFileAsString(file: String): String
+
+expect fun readFileAsByteArray(file: String): ByteArray
+
+expect fun writeByteArrayToFile(base: String, file: String, value: ByteArray): String

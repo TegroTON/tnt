@@ -21,8 +21,8 @@ package com.libermall.tnt.command
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.convert
+import com.github.ajalt.mordant.table.table
 import com.github.ajalt.mordant.terminal.Terminal
-import com.libermall.tnt.contract.nft.CollectionContract
 import com.libermall.tnt.contract.op.ChangeOwnerOp
 import com.libermall.tnt.contract.op.DeployItemOp
 import com.libermall.tnt.contract.op.TransferOp
@@ -34,53 +34,42 @@ import com.libermall.tnt.model.StandaloneItemModel
 import com.libermall.tnt.readFileAsString
 import com.libermall.tnt.toSafeBounceable
 import com.libermall.tnt.toSafeUnbounceable
-import kotlinx.coroutines.delay
+import com.libermall.tnt.writeByteArrayToFile
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import mu.KLogging
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.ton.block.*
+import org.ton.boc.BagOfCells
 import org.ton.cell.Cell
 import org.ton.cell.CellBuilder
-import org.ton.lite.client.LiteClient
+import org.ton.tlb.constructor.AnyTlbConstructor
 import org.ton.tlb.storeTlb
 
 class MintCommand : CliktCommand(
     name = "mint",
     help = """
-        Mint a collection
+        Turn item/collection specification file into a set of deployable bag-of-cells files
     """.trimIndent()
 ), KoinComponent {
-    val liteClient by inject<LiteClient>()
-    val wallet by inject<WalletV3R2>()
+    var stepNo = 0
     val terminal by inject<Terminal>()
 
-    @OptIn(ExperimentalSerializationApi::class)
-    val spec by argument().convert {
-        try {
-            Json.decodeFromString<SpecModel>(readFileAsString(it))
-        } catch (e: Exception) {
-            logger.warn(e, {})
-            throw e
+    val spec by argument(name = "SPEC", help = "Input specification file")
+        .convert {
+            try {
+                Json.decodeFromString<SpecModel>(readFileAsString(it))
+            } catch (e: Exception) {
+                logger.warn(e) {}
+                throw e
+            }
         }
-    }
+
+    val outputDirectory by argument(name = "OUTPUT", help = "Output directory for the result bag-of-cells files")
 
     override fun run(): Unit = runBlocking {
-        terminal.println("For mint, a single-use wallet contract will be deployed.")
-        terminal.println("To proceed, send sufficient amount of coins to ${wallet.address.toSafeUnbounceable()}")
-        terminal.println("Awaiting balance...")
-
-        withTimeout(600_000L) {
-            val balance = wallet.awaitBalance()
-            terminal.println("Got balance of $balance TON")
-        }
-
-        delay(5_000L)
-
         spec.entities
             .forEach {
                 mint(it)
@@ -93,84 +82,161 @@ class MintCommand : CliktCommand(
     }
 
     private suspend fun mint(collection: CollectionModel) {
-        val stub = collection.copy(owner = wallet.address) // transfer ownership later
+        val wallet = WalletV3R2()
+        var localSeqno = 0u
 
-        terminal.println("Deploying the collection ${stub.address().toSafeBounceable()}...")
-
-        wallet.bundleTransfer {
-            transfer {
-                dest = stub.address()
-                amount = Coins.ofNano(spec.collection_deploy_amount + spec.blockchain_fee)
-                bounce = false
-                stateInit = stub.stateInit()
+        table {
+            captionTop("Collection Summary")
+            header {
+                row("No.", "Step", "Address", "BoC File")
             }
-        }
+            body {
+                val collectionStub = collection.copy(owner = wallet.address) // transfer ownership later
 
-        delay(10_000L)
-
-        terminal.println("Deploying items...")
-        stub.items
-            .mapIndexed { index, model ->
-                DeployItemOp(
-                    0uL,
-                    index.toULong(),
-                    Coins.ofNano(spec.item_deploy_amount),
-                    CellBuilder.createCell {
-                        storeTlb(MsgAddress, wallet.address) // Transfer ownership later
-                        storeRef(model.content.asCell())
-                    }
-                )
-            }
-            .chunked(4)
-            .forEach {
-                terminal.println("Deploying items no. ${it.minOf { it.index }} through ${it.maxOf { it.index }}")
-
-                wallet.bundleTransfer {
-                    for (deployment in it) {
+                row(
+                    ++stepNo,
+                    "Deploy collection",
+                    collectionStub.address().toSafeBounceable(),
+                    wallet.bundleTransfer {
+                        this.seqno = localSeqno++
+                        this.timeout = UInt.MAX_VALUE
                         transfer {
-                            dest = stub.address()
-                            amount = Coins.ofNano(spec.item_deploy_amount + spec.blockchain_fee)
-                            payload(deployment)
+                            dest = collectionStub.address()
+                            amount = Coins.ofNano(spec.collection_deploy_amount + spec.blockchain_fee)
+                            bounce = false
+                            stateInit = collectionStub.stateInit()
                         }
                     }
-                }
-                delay(15_000)
-            }
+                        .writeToFile()
+                )
 
-        terminal.println("Transferring ownership of the collection to ${collection.owner.toSafeBounceable() ?: "none"}")
+                collectionStub.items
+                    .mapIndexed { index, model ->
+                        DeployItemOp(
+                            0uL,
+                            index.toULong(),
+                            Coins.ofNano(spec.item_deploy_amount),
+                            CellBuilder.createCell {
+                                storeTlb(MsgAddress, wallet.address) // Transfer ownership later
+                                storeRef(model.content.asCell())
+                            }
+                        ) to collectionStub.itemAddress(index.toULong())
+                    }
+                    .chunked(4)
+                    .forEach {
+                        ++stepNo
+                        val bocFile = wallet.bundleTransfer {
+                            this.seqno = localSeqno++
+                            this.timeout = UInt.MAX_VALUE
+                            for ((deploy, address) in it) {
+                                transfer {
+                                    dest = collectionStub.address()
+                                    amount = Coins.ofNano(spec.item_deploy_amount + spec.blockchain_fee)
+                                    payload(deploy)
+                                }
+                            }
+                        }
+                            .writeToFile()
 
-        wallet.bundleTransfer {
-            transfer {
-                dest = stub.address()
-                amount = Coins.ofNano(spec.blockchain_fee)
-                payload(ChangeOwnerOp(query_id = 0uL, new_owner = collection.owner))
+                        for ((_, address) in it) {
+                            row(
+                                stepNo,
+                                "Deploy item",
+                                address.toSafeBounceable(),
+                                bocFile,
+                            )
+                        }
+                    }
+
+                row(
+                    ++stepNo,
+                    "Transfer collection ownership",
+                    collectionStub.address().toSafeBounceable(),
+                    wallet.bundleTransfer {
+                        this.seqno = localSeqno++
+                        this.timeout = UInt.MAX_VALUE
+                        transfer {
+                            dest = collectionStub.address()
+                            amount = Coins.ofNano(spec.blockchain_fee)
+                            payload(ChangeOwnerOp(query_id = 0uL, new_owner = collection.owner))
+                        }
+                    }
+                        .writeToFile()
+                )
+
+                collectionStub.items
+                    .mapIndexed { index, model ->
+                        TransferOp(
+                            query_id = 0uL,
+                            new_owner = model.owner,
+                            response_destination = collection.owner,
+                            custom_payload = Maybe.of(null),
+                            forward_amount = VarUInteger(spec.item_forward_amount),
+                            forward_payload = Either.of(Cell.of(), null),
+                        ) to collectionStub.itemAddress(index.toULong())
+                    }
+                    .chunked(4)
+                    .forEach {
+                        ++stepNo
+                        val bocFile = wallet.bundleTransfer {
+                            this.seqno = localSeqno++
+                            this.timeout = UInt.MAX_VALUE
+                            for ((transfer, address) in it) {
+                                transfer {
+                                    dest = address
+                                    amount = Coins.ofNano(spec.item_forward_amount + spec.blockchain_fee)
+                                    payload(transfer)
+                                }
+                            }
+                        }
+                            .writeToFile()
+
+                        for ((_, address) in it) {
+                            row(
+                                stepNo,
+                                "Transfer item",
+                                address.toSafeBounceable(),
+                                bocFile,
+                            )
+                        }
+                    }
             }
         }
+            .let { terminal.println(it) }
 
-        delay(10_000)
-        terminal.println("Transferring ownership of all items to their respective owners")
-        (0uL until CollectionContract.of(stub.address(), liteClient).next_item_index)
-            .map { index ->
-                index to CollectionContract.itemAddressOf(
-                    stub.address(),
-                    index,
-                    liteClient
-                ) as MsgAddressInt
+        terminal.println("Single-use wallet address will be ${wallet.address.toSafeUnbounceable()}")
+        terminal.println("Send sufficient funds tho this address and proceed with `tnt send` to deploy contracts.")
+    }
+
+    private suspend fun mint(item: StandaloneItemModel) {
+        val wallet = WalletV3R2()
+
+        table {
+            captionTop("Collection Summary")
+            header {
+                row("No.", "Step", "Address", "BoC File")
             }
-            .chunked(4)
-            .forEach {
-                terminal.println("Transferring items no. ${it.minOf { it.first }} through ${it.maxOf { it.first }}")
+            body {
+                // Mint with temporary wallet as the owner, transfer ownership in the same transaction
+                val stub = item.copy(owner = wallet.address)
 
-                wallet.bundleTransfer {
-                    for (item in it) {
+                row(
+                    ++stepNo,
+                    "Deploy  and transfer item",
+                    stub.address().toSafeBounceable(),
+                    wallet.bundleTransfer {
+                        seqno = 0u
+                        this.timeout = UInt.MAX_VALUE
                         transfer {
-                            dest = item.second
-                            amount = Coins.ofNano(spec.item_forward_amount + spec.blockchain_fee)
+                            dest = stub.address()
+                            amount =
+                                Coins.ofNano(spec.item_deploy_amount + spec.item_forward_amount + spec.blockchain_fee)
+                            bounce = false
+                            stateInit = stub.stateInit()
                             payload(
                                 TransferOp(
-                                    query_id = 0uL,
-                                    new_owner = collection.items[item.first.toInt()].owner,
-                                    response_destination = collection.owner,
+                                    new_owner = item.owner,
+                                    response_destination = item.owner,
                                     custom_payload = Maybe.of(null),
                                     forward_amount = VarUInteger(spec.item_forward_amount),
                                     forward_payload = Either.of(Cell.of(), null),
@@ -178,36 +244,27 @@ class MintCommand : CliktCommand(
                             )
                         }
                     }
-                }
-
-                delay(15_000)
-            }
-    }
-
-    private suspend fun mint(item: StandaloneItemModel) {
-        // Mint with temporary wallet as the owner, transfer ownership in the same transaction
-        val stub = item.copy(owner = wallet.address)
-
-        terminal.println("Deploying standalone item as ${stub.address().toSafeBounceable()}...")
-        wallet.bundleTransfer {
-            transfer {
-                dest = stub.address()
-                amount =
-                    Coins.ofNano(spec.item_deploy_amount + spec.item_forward_amount + spec.blockchain_fee)
-                bounce = false
-                stateInit = stub.stateInit()
-                payload(
-                    TransferOp(
-                        new_owner = item.owner,
-                        response_destination = item.owner,
-                        custom_payload = Maybe.of(null),
-                        forward_amount = VarUInteger(spec.item_forward_amount),
-                        forward_payload = Either.of(Cell.of(), null),
-                    )
+                        .writeToFile()
                 )
             }
         }
+            .let { terminal.println(it) }
+
+        terminal.println("Single-use wallet address will be ${wallet.address.toSafeUnbounceable()}")
+        terminal.println("Send sufficient funds tho this address and proceed with `tnt send` to deploy contracts.")
     }
+
+    private fun Message<Cell>.writeToFile() =
+        writeByteArrayToFile(
+            outputDirectory,
+            "step_${stepNo}.boc",
+            BagOfCells(CellBuilder.createCell {
+                storeTlb(
+                    Message.tlbCodec(AnyTlbConstructor),
+                    this@writeToFile
+                )
+            }).toByteArray()
+        )
 
     companion object : KLogging()
 }

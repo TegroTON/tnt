@@ -18,23 +18,7 @@
 
 package com.libermall.tnt
 
-import com.github.ajalt.clikt.core.subcommands
-import com.libermall.tnt.command.*
-import com.libermall.tnt.logger.KoinLogger
-import org.koin.core.context.startKoin
-import org.koin.core.logger.Level
+import java.io.File
 
-fun main(args: Array<String>) {
-    startKoin {
-        logger(KoinLogger(Level.DEBUG))
-    }
-
-    TntCommand()
-        .subcommands(
-            CollectionCommand(),
-            ItemCommand(),
-            MintCommand(),
-            SendCommand(),
-        )
-        .main(args)
-}
+actual fun readFileAsByteArray(file: String): ByteArray =
+    File(file).readBytes()

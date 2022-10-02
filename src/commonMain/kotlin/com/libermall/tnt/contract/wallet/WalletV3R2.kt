@@ -18,13 +18,8 @@
 
 package com.libermall.tnt.contract.wallet
 
-import com.libermall.tnt.sendMessage
-import kotlinx.coroutines.delay
 import mu.KLogging
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import org.ton.api.pk.PrivateKeyEd25519
-import org.ton.bigint.BigInt
 import org.ton.block.AddrStd
 import org.ton.block.Coins
 import org.ton.block.StateInit
@@ -41,13 +36,11 @@ data class WalletV3R2(
     private val private_key: PrivateKeyEd25519 = PrivateKeyEd25519.generate(),
     val workchain_id: Int = 0,
     val wallet_id: UInt = (698983191 + workchain_id).toUInt(),
-) : KoinComponent {
+) {
     init {
         logger.warn { "For recovery purposes, single-use wallet's private key is ${base64(private_key.key)}" }
         logger.warn { "Never share this private key with anyone!" }
     }
-
-    private val liteClient by inject<LiteClient>()
 
     private val data = CellBuilder.createCell {
         storeUInt32(0u) // seqno
@@ -60,7 +53,7 @@ data class WalletV3R2(
     val address =
         AddrStd(workchain_id, CellBuilder.createCell { storeTlb(StateInit, stateInit) }.hash())
 
-    suspend fun createSignedMessage(builder: suspend CellBuilder.() -> Unit): Cell {
+    fun createSignedMessage(builder: CellBuilder.() -> Unit): Cell {
         val data = CellBuilder.beginCell().apply { builder() }.endCell()
         return CellBuilder.createCell {
             storeBytes(private_key.sign(data.hash()))
@@ -69,22 +62,9 @@ data class WalletV3R2(
         }
     }
 
-    suspend fun bundleTransfer(builder: suspend BundleTransferBuilder.() -> Unit) = BundleTransferBuilder(
+    fun bundleTransfer(builder: BundleTransferBuilder.() -> Unit) = BundleTransferBuilder(
         this
-    ).apply { builder() }.build().sendMessage(liteClient)
-
-    suspend fun balance(): Coins? = balance(address, liteClient)
-
-    suspend fun awaitBalance(): Coins {
-        var balance: Coins
-        do {
-            balance = balance() ?: Coins.ofNano(0)
-            delay(2_000L)
-        } while (balance.amount.value <= BigInt.ZERO)
-        return balance
-    }
-
-    suspend fun seqno(): UInt = seqno(address, liteClient)
+    ).apply { builder() }.build()
 
     companion object : KLogging() {
         val CODE =

@@ -20,7 +20,6 @@ package com.libermall.tnt.contract.wallet
 
 import kotlinx.datetime.Clock
 import mu.KLogging
-import org.ton.api.exception.TvmException
 import org.ton.bitstring.BitString
 import org.ton.block.ExtInMsgInfo
 import org.ton.block.Message
@@ -33,23 +32,18 @@ class BundleTransferBuilder(
     var seqno: UInt? = null
     var timeout: UInt = (Clock.System.now().toEpochMilliseconds() / 1000).toUInt() + 60u
 
-    suspend fun transfer(builder: suspend TransferBuilder.() -> Unit) {
+    fun transfer(builder: TransferBuilder.() -> Unit) {
         transfers.add(TransferBuilder().apply { builder() })
         require(transfers.size <= 4)
     }
 
-    suspend fun build() = Message(
+    fun build() = Message(
         info = ExtInMsgInfo(dest = wallet.address),
         init = wallet.stateInit,
         body = wallet.createSignedMessage {
             storeUInt32(wallet.wallet_id)
 
-            val actualSeqno = try {
-                seqno ?: wallet.seqno()
-            } catch (e: TvmException) {
-                logger.debug("failed to get seqno, assuming = 0", e)
-                0u
-            }
+            val actualSeqno = seqno!!
 
             if (actualSeqno == 0u) {
                 storeBits(BitString("FFFFFFFF"))

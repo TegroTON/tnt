@@ -74,6 +74,21 @@ data class CollectionModel(
         }
     }
 
+    fun itemAddress(index: ULong) = AddrStd(
+        workchain_id,
+        CellBuilder.createCell {
+            storeTlb(StateInit,
+                StateInit(
+                    code = item_code,
+                    data = CellBuilder.createCell {
+                        storeUInt64(index)
+                        storeTlb(MsgAddress, address())
+                    }
+                )
+            )
+        }.hash()
+    )
+
     companion object {
         val CODE =
             BagOfCells(

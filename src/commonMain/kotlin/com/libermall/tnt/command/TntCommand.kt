@@ -26,7 +26,6 @@ import com.github.ajalt.mordant.terminal.Terminal
 import com.libermall.tnt.config.MainnetConfig
 import com.libermall.tnt.config.SandboxConfig
 import com.libermall.tnt.config.TestnetConfig
-import com.libermall.tnt.contract.wallet.WalletV3R2
 import com.libermall.tnt.logger.TonLogger
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -95,9 +94,6 @@ class TntCommand :
                     Terminal().apply {
                         info.updateTerminalSize()
                     }
-                }
-                single {
-                    WalletV3R2()
                 }
             }
         )
