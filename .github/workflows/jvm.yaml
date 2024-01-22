@@ -29,7 +29,7 @@ jobs:
         with:
           arguments: installDist distZip --no-daemon
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: tnt-jvm
           path: build/install/
