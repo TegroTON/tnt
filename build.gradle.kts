@@ -57,7 +57,7 @@ kotlin {
                 implementation("com.github.andreypfau.ton-kotlin:ton-kotlin:0.2.16")
                 implementation("io.github.microutils:kotlin-logging:2.1.23")
                 implementation("io.insert-koin:koin-core:3.2.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
             }
         }
         val jvmMain by getting {
